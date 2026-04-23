@@ -1,11 +1,9 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 jobs:
   # ── 1. Lint ──────────────────────────────────────────
   lint:
@@ -13,19 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Run ESLint
         run: npm run lint
-
   # ── 2. Test ──────────────────────────────────────────
   test:
     name: Test
@@ -36,31 +30,43 @@ jobs:
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Run tests
         run: npm test
-
-  # ── 3. Build (Docker) ────────────────────────────────
-  build:
-    name: Build Docker Image
+  # ── 3. SonarCloud Analysis ───────────────────────────
+  sonarcloud:
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
     needs: test
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=AI-Resume-Analyzer
+            -Dsonar.organization=harsh-dev1708
+  # ── 4. Build (Docker) ────────────────────────────────
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: sonarcloud
+    steps:
+      - uses: actions/checkout@v4
       - name: Build Docker image
         run: docker build -t ai-resume-analyzer:${{ github.sha }} .
-
-  # ── 4. Deploy to Render ──────────────────────────────
+  # ── 5. Deploy to Render ──────────────────────────────
   deploy:
     name: Deploy to Render
     runs-on: ubuntu-latest
@@ -72,5 +78,3 @@ jobs:
           curl -s -o /dev/null -w "%{http_code}" \
             --fail \
             "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
