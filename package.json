@@ -7,7 +7,7 @@
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
     "lint": "eslint backend/**/*.js",
-    "test": "jest --forceExit --detectOpenHandles",
+    "test": "jest --forceExit --detectOpenHandles --coverage",
     "build": "echo 'No build step required'"
   },
   "dependencies": {
