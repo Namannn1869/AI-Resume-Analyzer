@@ -72,6 +72,12 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## 🐳 Docker (Local)
 
+### Using Docker Compose (Recommended)
+```bash
+docker-compose up --build
+```
+
+### Using Docker CLI
 ```bash
 docker build -t resume-analyzer .
 docker run -p 3000:3000 --env-file .env resume-analyzer
